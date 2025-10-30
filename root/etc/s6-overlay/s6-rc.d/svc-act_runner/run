@@ -1,0 +1,7 @@
+#!/command/with-contenv bash
+# shellcheck shell=bash
+
+export CONFIG_FILE="/data/config.yaml"
+
+exec \
+  /usr/local/bin/run.sh
