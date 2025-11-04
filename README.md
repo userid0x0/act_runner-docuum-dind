@@ -4,10 +4,12 @@
 # Gitea act_runner with docuum - Docker-in-Docker (dind) variant
 
 ## Intention
-A `act_runner` with S6 Version 3 that manages:
-* `docker`
+A `act_runner` Image with S6 Version 3 that manages:
+
+* `docker` as Docker-in-Docker/dind
 * `act_runner`
 * `docuum`
+
 with a `linuxserver.io` insprired usage. Persistent files are stored in `/data` reducing the number of bind-mounts.
 
 ## Usage
