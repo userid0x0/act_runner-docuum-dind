@@ -23,6 +23,7 @@ services:
       GITEA_INSTANCE_URL: "${INSTANCE_URL}"
       GITEA_RUNNER_REGISTRATION_TOKEN: "${REGISTRATION_TOKEN}"
       GITEA_RUNNER_NAME: "${RUNNER_NAME}"
+      # DOCUUM_ARGS: "--threshold 80GB"
     env_file:
       - .env
     volumes:

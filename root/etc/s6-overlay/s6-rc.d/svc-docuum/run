@@ -3,5 +3,7 @@
 
 export XDG_DATA_HOME="/data"
 
+: ${DOCUUM_ARGS:="--threshold 80GB"}
+
 exec \
-  /usr/local/bin/docuum --threshold 80GB
+  /usr/local/bin/docuum ${DOCUUM_ARGS}
