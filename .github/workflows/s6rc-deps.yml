@@ -1,0 +1,54 @@
+name: Generate s6rc graph
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: graphviz
+          version: 1.0
+
+      - name: Download s6rc-deps.sh
+        run: |
+          wget -O s6rc_deps.sh \
+            https://gist.github.com/userid0x0/8bab9ffd4ef0c5e8dd8213dce19f4256/raw/a5113f143c11613e56ce8a1ebe3e14d8e873f48e/s6rc_deps.sh
+          chmod +x s6rc_deps.sh
+
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: false
+          tags: localhost/tmp_image
+      
+      - name: Generate S6 graph as dot file
+        run: |
+          (docker stop temp_instance && sleep 20) || true
+          docker run --detach --rm --name temp_instance localhost/tmp_image
+          sleep 30
+          docker logs temp_instance
+          docker cp ./s6rc_deps.sh temp_instance:/s6rc_deps.sh
+          docker exec --tty temp_instance /s6rc_deps.sh /etc/s6-overlay/s6-rc.d > ./s6rc.dot
+          docker stop temp_instance
+          docker image rm localhost/tmp_image
+
+      - name: Render dot graph
+        run: |
+          dot -Tsvg -o s6rc.svg s6rc.dot
+
+      - name: Archive s6rc.svg
+        uses: actions/upload-artifact@v4
+        with:
+          name: master-s6rc
+          path: s6rc.svg
