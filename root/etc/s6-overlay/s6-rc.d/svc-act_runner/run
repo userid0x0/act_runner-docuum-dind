@@ -1,7 +1,8 @@
 #!/command/with-contenv bash
 # shellcheck shell=bash
 
-export CONFIG_FILE="/data/config.yaml"
+export HOME=$(realpath ~abc)
+export CONFIG_FILE="/config/config.yaml"
 
-exec \
-  /usr/local/bin/run.sh
+exec s6-setuidgid abc \
+  /usr/local/bin/run-act_runner.sh
