@@ -8,9 +8,14 @@ A [act_runner](https://gitea.com/gitea/act_runner) Image based on [linuxserver.i
 
 * `docker` as Docker-in-Docker (DinD)<br> installed via a local `DOCKER_MOD`
 * `act_runner`
-* `docuum` for LRU based Docker Image cleanup
+* `docuum`
 
 Persistent files are stored in `/config` reducing the number of bind-mounts. Services are run as user `abc`.
+
+The image cleans up unused images using the following strategy:
+
+* crontab based pruning of dangling images (images with a `none` tag) - every 4h<br>command: `docker image prune --filter "dangling=true"`
+* `docuum` for LRU based Docker Image cleanup<br>see also https://github.com/stepchowfun/docuum/tree/v0.25.1
 
 ## Usage
 
@@ -18,7 +23,7 @@ Persistent files are stored in `/config` reducing the number of bind-mounts. Ser
 ```yaml
 services:
   runner:
-    image: docker.io/userid0x0/act_runner-docuum-dind:0.2.13-1
+    image: docker.io/userid0x0/act_runner-docuum-dind:0.2.13-2
     restart: unless-stopped
     privileged: true
     environment:
