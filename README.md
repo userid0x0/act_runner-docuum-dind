@@ -56,3 +56,8 @@ Based on https://docs.linuxserver.io/general/container-customization/#custom-scr
 
 * custom root certificate installation
 * configuration changes e.g. `/etc/docker/daemon.json`
+
+## Internals
+### s6rc.d dependency graph
+![s6rc.d dependency](/misc/s6rc.svg)
+
