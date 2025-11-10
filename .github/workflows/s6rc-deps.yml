@@ -46,6 +46,7 @@ jobs:
 
       - name: Render dot graph
         run: |
+          sudo dot -c
           dot -Tsvg -o s6rc.svg s6rc.dot
 
       - name: Archive s6rc.svg
