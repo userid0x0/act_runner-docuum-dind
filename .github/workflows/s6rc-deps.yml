@@ -41,7 +41,8 @@ jobs:
           docker cp ./s6rc_deps.sh temp_instance:/s6rc_deps.sh
           docker exec --tty temp_instance /s6rc_deps.sh /etc/s6-overlay/s6-rc.d > ./s6rc.dot
           docker stop temp_instance
-          docker image rm localhost/tmp_image
+          sleep 10
+          docker image rm localhost/tmp_image || true
 
       - name: Render dot graph
         run: |
