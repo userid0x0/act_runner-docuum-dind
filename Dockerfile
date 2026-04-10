@@ -1,9 +1,9 @@
-ARG ALPINE_TAG=3.22
-ARG ACT_RUNNER_TAG=0.2.13
+ARG ALPINE_TAG=3.23
+ARG ACT_RUNNER_TAG=0.3.1
 
 FROM ghcr.io/linuxserver/baseimage-alpine:${ALPINE_TAG} AS downloader-amd64
 
-ARG DOCUUM_VERSION=0.25.1
+ARG DOCUUM_VERSION=0.27.0
 
 ADD --chown=root:root \
     --chmod=755 \
