@@ -15,7 +15,7 @@ Persistent files are stored in `/config` reducing the number of bind-mounts. Ser
 The image cleans up unused images using the following strategy:
 
 * crontab based pruning of dangling images (images with a `none` tag) - every 4h<br>command: `docker image prune --filter "dangling=true"`
-* `docuum` for LRU based Docker Image cleanup<br>see also https://github.com/stepchowfun/docuum/tree/v0.25.1
+* `docuum` for LRU based Docker Image cleanup<br>see also https://github.com/stepchowfun/docuum/tree/v0.27.0
 
 ## Usage
 
@@ -23,7 +23,7 @@ The image cleans up unused images using the following strategy:
 ```yaml
 services:
   runner:
-    image: docker.io/userid0x0/act_runner-docuum-dind:0.2.13-2
+    image: docker.io/userid0x0/act_runner-docuum-dind:0.3.1-1
     restart: unless-stopped
     privileged: true
     environment:
