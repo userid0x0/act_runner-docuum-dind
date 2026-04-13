@@ -12,7 +12,7 @@ ADD --chown=root:root \
 
 FROM ghcr.io/linuxserver/baseimage-alpine:${ALPINE_TAG} AS downloader-arm64
 
-ARG DOCUUM_VERSION=0.25.1
+ARG DOCUUM_VERSION=0.27.0
 
 ADD --chown=root:root \
     --chmod=755 \
