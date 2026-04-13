@@ -1,5 +1,6 @@
 [![Docker Image](https://img.shields.io/badge/Docker%20Image-available-success&style=flat)](https://hub.docker.com/r/userid0x0/act_runner-docuum-dind/)
 [![Build](https://img.shields.io/github/actions/workflow/status/userid0x0/act_runner-docuum-dind/docker-build-publish.yml?branch=master&label=build&logo=github&style=flat)](https://github.com/userid0x0/act_runner-docuum-dind/actions)
+[![Github Repo](https://img.shields.io/badge/github-repo-blue?logo=github&style=flat)](https://github.com/userid0x0/act_runner-docuum-dind)
 
 # Gitea act_runner with docuum - Docker-in-Docker (DinD) variant
 
