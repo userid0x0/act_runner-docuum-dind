@@ -5,4 +5,4 @@ export HOME=$(realpath ~abc)
 export CONFIG_FILE="/config/config.yaml"
 
 exec s6-setuidgid abc \
-  /usr/local/bin/run-act_runner.sh
+  /usr/local/bin/run-gitea-runner.sh

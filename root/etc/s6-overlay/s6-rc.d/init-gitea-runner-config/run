@@ -1,0 +1,12 @@
+#!/command/with-contenv bash
+# shellcheck shell=bash
+
+CONFIG_FILE="/config/config.yaml"
+
+[ ! -f "${CONFIG_FILE}" ] || exit 0
+
+echo "Generate gitea-runner configuration template: ${CONFIG_FILE}"
+
+s6-setuidgid abc \
+  bash -c "gitea-runner generate-config > "${CONFIG_FILE}""
+cat "${CONFIG_FILE}"

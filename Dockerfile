@@ -1,5 +1,5 @@
-ARG ALPINE_TAG=3.23
-ARG ACT_RUNNER_TAG=0.3.1
+ARG ALPINE_TAG=3.24
+ARG ACT_RUNNER_TAG=1.0.8
 
 FROM ghcr.io/linuxserver/baseimage-alpine:${ALPINE_TAG} AS downloader-amd64
 
@@ -20,14 +20,14 @@ ADD --chown=root:root \
     /patch/usr/local/bin/docuum
 
 FROM downloader-${TARGETARCH} AS downloader
-FROM docker.io/gitea/act_runner:${ACT_RUNNER_TAG}-dind AS act_runner
+FROM docker.io/gitea/runner:${ACT_RUNNER_TAG}-dind AS act_runner
 
 # prepare /patch with act_runner & run.sh
 # ensure run.sh uses `/config` as LSIO does
 RUN mkdir -p /patch/usr/local/bin \
-    && cp /usr/local/bin/run.sh     /patch/usr/local/bin/run-act_runner.sh \
-    && cp /usr/local/bin/act_runner /patch/usr/local/bin/act_runner \
-    && sed -i 's# /data# /config#'  /patch/usr/local/bin/run-act_runner.sh
+    && cp /usr/local/bin/run.sh       /patch/usr/local/bin/run-gitea-runner.sh \
+    && cp /usr/local/bin/gitea-runner /patch/usr/local/bin/gitea-runner \
+    && sed -i 's# /data# /config#'    /patch/usr/local/bin/run-gitea-runner.sh
 
 FROM ghcr.io/linuxserver/baseimage-alpine:${ALPINE_TAG}
 
