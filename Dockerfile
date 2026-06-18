@@ -20,9 +20,9 @@ ADD --chown=root:root \
     /patch/usr/local/bin/docuum
 
 FROM downloader-${TARGETARCH} AS downloader
-FROM docker.io/gitea/runner:${ACT_RUNNER_TAG}-dind AS act_runner
+FROM docker.io/gitea/runner:${ACT_RUNNER_TAG}-dind AS gitea-runner
 
-# prepare /patch with act_runner & run.sh
+# prepare /patch with gitea-runner & run.sh
 # ensure run.sh uses `/config` as LSIO does
 RUN mkdir -p /patch/usr/local/bin \
     && cp /usr/local/bin/run.sh       /patch/usr/local/bin/run-gitea-runner.sh \
@@ -63,7 +63,7 @@ VOLUME [ "/data" ]
 # - docuum
 # - act_runner (including some scripts)
 COPY --from=downloader /patch /
-COPY --from=act_runner /patch /
+COPY --from=gitea-runner /patch /
 
 # add local configuration and s6-rc.d logic
 ADD /root /
