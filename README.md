@@ -2,16 +2,16 @@
 [![Build](https://img.shields.io/github/actions/workflow/status/userid0x0/act_runner-docuum-dind/docker-build-publish.yml?branch=master&label=build&logo=github&style=flat)](https://github.com/userid0x0/act_runner-docuum-dind/actions)
 [![Github Repo](https://img.shields.io/badge/github-repo-blue?logo=github&style=flat)](https://github.com/userid0x0/act_runner-docuum-dind)
 
-# Gitea act_runner with docuum - Docker-in-Docker (DinD) variant
+# Gitea gitea-runner with docuum - Docker-in-Docker (DinD) variant
 
 ## Intention
-A [act_runner](https://gitea.com/gitea/act_runner) Image based on [linuxserver.io](https://linuxserver.io)'s `baseimage-alpine`. Included components:
+A [gitea-runner](https://gitea.com/gitea/runner) Image based on [linuxserver.io](https://linuxserver.io)'s `baseimage-alpine`. Included components:
 
 * `docker` as Docker-in-Docker (DinD)<br> installed via a local `DOCKER_MOD`
-* `act_runner`
+* `gitea-runner` (formerly known as `act_runner`)
 * `docuum`
 
-Persistent files are stored in `/config` reducing the number of bind-mounts. Services are run as user `abc`.
+Persistent files are stored in `/config` & `/data` reducing the number of bind-mounts. Services are run as user `abc`.
 
 The image cleans up unused images using the following strategy:
 
@@ -24,7 +24,7 @@ The image cleans up unused images using the following strategy:
 ```yaml
 services:
   runner:
-    image: docker.io/userid0x0/act_runner-docuum-dind:0.3.1-1
+    image: docker.io/userid0x0/act_runner-docuum-dind:v1.0.8-1
     restart: unless-stopped
     privileged: true
     environment:
@@ -38,7 +38,7 @@ services:
       - .env
     volumes:
       - ./config:/config
-      - docker:/config/var/lib/docker
+      - docker:/data
 
 volumes:
   docker:
