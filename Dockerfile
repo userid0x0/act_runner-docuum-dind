@@ -35,11 +35,13 @@ FROM ghcr.io/linuxserver/baseimage-alpine:${ALPINE_TAG}
 # add a DOCKER_MOD universal-docker-in-docker as a static mod
 # - docker itself will the installed on container start
 # - speedup - install dependencies already using apk
+# - use /data as persistent docker storage
 COPY --from=ghcr.io/linuxserver/mods:universal-docker-in-docker-28.5.2-2.40.3 / /mods/universal-docker-in-docker-28
 COPY --from=ghcr.io/linuxserver/mods:universal-docker-in-docker-29.5.3-5.1.4 / /mods/universal-docker-in-docker-29
 
-ENV DOCKER_MODS=universal-docker-in-docker-28 \
-    DOCKER_MODS_SIDELOAD=true
+ENV DOCKER_MODS=universal-docker-in-docker-29 \
+    DOCKER_MODS_SIDELOAD=true \
+    MODS_DIND_PERSISTENCE=/data/var/lib/docker
 
 RUN apk add --no-cache \
       btrfs-progs \
@@ -51,7 +53,10 @@ RUN apk add --no-cache \
       openssl \
       pigz \
       xfsprogs \
-      xz
+      xz \
+    && mkdir -p /data/var/lib/docker
+
+VOLUME [ "/data" ]
 # </universal-docker-in-docker>
 
 # install
