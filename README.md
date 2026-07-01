@@ -8,7 +8,7 @@
 A [gitea-runner](https://gitea.com/gitea/runner) Image based on [linuxserver.io](https://linuxserver.io)'s `baseimage-alpine`. Included components:
 
 * `docker` as Docker-in-Docker (DinD)<br> installed via a local `DOCKER_MOD`
-* `gitea-runner` (formerly known as `act_runner`)
+* `gitea-runner` (formerly known as `act_runner`)<br> see also https://gitea.com/gitea/runner
 * `docuum`
 
 Persistent files are stored in `/config` & `/data` reducing the number of bind-mounts. Services are run as user `abc`.
@@ -24,7 +24,7 @@ The image cleans up unused images using the following strategy:
 ```yaml
 services:
   runner:
-    image: docker.io/userid0x0/act_runner-docuum-dind:v1.0.8-1
+    image: docker.io/userid0x0/act_runner-docuum-dind:v2.0.0-1
     restart: unless-stopped
     privileged: true
     environment:

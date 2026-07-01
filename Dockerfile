@@ -1,5 +1,5 @@
 ARG ALPINE_TAG=3.24
-ARG ACT_RUNNER_TAG=1.0.8
+ARG ACT_RUNNER_TAG=2.0.0
 
 FROM ghcr.io/linuxserver/baseimage-alpine:${ALPINE_TAG} AS downloader-amd64
 
