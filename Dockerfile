@@ -1,7 +1,9 @@
-ARG ALPINE_TAG=3.24
-ARG ACT_RUNNER_TAG=2.0.0
+FROM ghcr.io/linuxserver/baseimage-alpine:3.24 AS baseimage-alpine
+FROM docker.io/gitea/runner:2.0.0-dind AS gitea-runner-dind
 
-FROM ghcr.io/linuxserver/baseimage-alpine:${ALPINE_TAG} AS downloader-amd64
+# ---
+
+FROM baseimage-alpine AS downloader-amd64
 
 ARG DOCUUM_VERSION=0.27.0
 
@@ -10,7 +12,7 @@ ADD --chown=root:root \
     https://github.com/stepchowfun/docuum/releases/download/v${DOCUUM_VERSION}/docuum-x86_64-unknown-linux-musl \
     /patch/usr/local/bin/docuum
 
-FROM ghcr.io/linuxserver/baseimage-alpine:${ALPINE_TAG} AS downloader-arm64
+FROM baseimage-alpine AS downloader-arm64
 
 ARG DOCUUM_VERSION=0.27.0
 
@@ -20,7 +22,8 @@ ADD --chown=root:root \
     /patch/usr/local/bin/docuum
 
 FROM downloader-${TARGETARCH} AS downloader
-FROM docker.io/gitea/runner:${ACT_RUNNER_TAG}-dind AS gitea-runner
+
+FROM gitea-runner-dind AS downloader-gitea-runner
 
 # prepare /patch with gitea-runner & run.sh
 # ensure run.sh uses `/config` as LSIO does
@@ -29,7 +32,9 @@ RUN mkdir -p /patch/usr/local/bin \
     && cp /usr/local/bin/gitea-runner /patch/usr/local/bin/gitea-runner \
     && sed -i 's# /data# /config#'    /patch/usr/local/bin/run-gitea-runner.sh
 
-FROM ghcr.io/linuxserver/baseimage-alpine:${ALPINE_TAG}
+# ---
+
+FROM baseimage-alpine
 
 # <universal-docker-in-docker>
 # add a DOCKER_MOD universal-docker-in-docker as a static mod
@@ -61,9 +66,9 @@ VOLUME [ "/data" ]
 
 # install
 # - docuum
-# - act_runner (including some scripts)
+# - gitea-runner (including some scripts)
 COPY --from=downloader /patch /
-COPY --from=gitea-runner /patch /
+COPY --from=downloader-gitea-runner /patch /
 
 # add local configuration and s6-rc.d logic
 ADD /root /
