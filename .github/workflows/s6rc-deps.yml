@@ -25,7 +25,7 @@ jobs:
           chmod +x s6rc_deps.sh
 
       - name: Build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           platforms: linux/amd64
