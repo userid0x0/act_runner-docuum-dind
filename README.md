@@ -24,7 +24,7 @@ The image cleans up unused images using the following strategy:
 ```yaml
 services:
   runner:
-    image: docker.io/userid0x0/act_runner-docuum-dind:v2.0.1-1
+    image: docker.io/userid0x0/act_runner-docuum-dind:v2.1.0-1
     restart: unless-stopped
     privileged: true
     environment:
