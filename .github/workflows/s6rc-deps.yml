@@ -50,7 +50,7 @@ jobs:
           dot -Tsvg -o s6rc.svg s6rc.dot
 
       - name: Archive s6rc.svg
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: master-s6rc
           path: s6rc.svg
