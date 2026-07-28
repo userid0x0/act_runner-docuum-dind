@@ -1,5 +1,5 @@
 FROM ghcr.io/linuxserver/baseimage-alpine:3.24 AS baseimage-alpine
-FROM docker.io/gitea/runner:2.2.0-dind AS gitea-runner-dind
+FROM docker.io/gitea/runner:2.3.0-dind AS gitea-runner-dind
 
 # ---
 
