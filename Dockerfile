@@ -1,5 +1,6 @@
 FROM ghcr.io/linuxserver/baseimage-alpine:3.24 AS baseimage-alpine
 FROM docker.io/gitea/runner:2.3.0-dind AS gitea-runner-dind
+FROM ghcr.io/linuxserver/mods:universal-docker-in-docker-29.6.2-5.3.1 AS docker-in-docker-mod
 
 # ---
 
@@ -41,7 +42,7 @@ FROM baseimage-alpine
 # - docker itself will the installed on container start
 # - speedup - install dependencies already using apk
 # - use /data as persistent docker storage
-COPY --from=ghcr.io/linuxserver/mods:universal-docker-in-docker-29.6.2-5.3.1 / /mods/universal-docker-in-docker-29
+COPY --from=docker-in-docker-mod / /mods/universal-docker-in-docker-29
 
 ENV DOCKER_MODS=universal-docker-in-docker-29 \
     DOCKER_MODS_SIDELOAD=true \
