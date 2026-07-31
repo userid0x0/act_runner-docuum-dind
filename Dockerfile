@@ -1,3 +1,6 @@
+ARG GITEA_RUNNER_DIND_IMAGE=gitea-runner-dind
+
+# use these hardcoded versions allow a proper detection by dependabot
 FROM ghcr.io/linuxserver/baseimage-alpine:3.24 AS baseimage-alpine
 FROM docker.io/gitea/runner:2.3.0-dind AS gitea-runner-dind
 FROM ghcr.io/linuxserver/mods:universal-docker-in-docker-29.6.2-5.3.1 AS docker-in-docker-mod
@@ -24,7 +27,8 @@ ADD --chown=root:root \
 
 FROM downloader-${TARGETARCH} AS downloader
 
-FROM gitea-runner-dind AS downloader-gitea-runner
+# use this indirection in order to have a override capability e.g. for nightly / local gitea-runner builds
+FROM ${GITEA_RUNNER_DIND_IMAGE} AS downloader-gitea-runner
 
 # prepare /patch with gitea-runner & run.sh
 # ensure run.sh uses `/config` as LSIO does

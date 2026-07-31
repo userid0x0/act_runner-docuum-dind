@@ -10,6 +10,9 @@ on:
   pull_request:
     branches:
       - 'master'
+  schedule:
+    - cron: '30 7 * * *'
+      timezone: 'Europe/Berlin'
 
 jobs:
   docker:
@@ -29,6 +32,11 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/act_runner-docuum-dind
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{raw}}
+            type=schedule,pattern=nightly
 
       - name: Login to DockerHub
         if: github.event_name != 'pull_request'
@@ -36,6 +44,13 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set build-args
+        id: buildargs
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo gitea_runner_dind_image="GITEA_RUNNER_DIND_IMAGE=docker.io/gitea/runner:nightly-dind" | tee $GITHUB_OUTPUT
+          fi
 
       - name: Build and push
         uses: docker/build-push-action@v7
@@ -45,3 +60,5 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            ${{ steps.buildargs.outputs.gitea_runner_dind_image }}
