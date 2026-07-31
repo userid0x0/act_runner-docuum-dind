@@ -6,5 +6,7 @@ export XDG_DATA_HOME="${HOME}"
 
 : ${DOCUUM_ARGS:="--threshold 80GB"}
 
+echo -e "Start service 'docuum'\n - logdir: /config/logs/docuum\n - arguments: '${DOCUUM_ARGS}'" 1>&2
+
 exec s6-setuidgid abc \
-  /usr/local/bin/docuum ${DOCUUM_ARGS}
+  /usr/local/bin/docuum ${DOCUUM_ARGS} 2>&1
