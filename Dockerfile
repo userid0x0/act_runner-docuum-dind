@@ -2,7 +2,7 @@ ARG GITEA_RUNNER_DIND_IMAGE=gitea-runner-dind
 
 # use these hardcoded versions allow a proper detection by dependabot
 FROM ghcr.io/linuxserver/baseimage-alpine:3.24 AS baseimage-alpine
-FROM docker.io/gitea/runner:3.0.1-dind AS gitea-runner-dind
+FROM docker.io/gitea/runner:3.0.2-dind AS gitea-runner-dind
 FROM ghcr.io/linuxserver/mods:universal-docker-in-docker-29.6.2-5.3.1 AS docker-in-docker-mod
 
 # ---
