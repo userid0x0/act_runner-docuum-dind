@@ -1,0 +1,96 @@
+#!/command/with-contenv bash
+# shellcheck shell=bash
+set -e
+
+. /opt/lib/lib.sh
+
+register () {
+  local try success
+  local registration_token="$1"
+  local runner_name="$2"
+  local config_arg="$3"
+  local extra_args="$4"
+  RUNNER_STATE_FILE=${RUNNER_STATE_FILE:-'.runner'}
+  if [[ ! -s "$RUNNER_STATE_FILE" ]]; then
+    try=0
+    success=0
+
+    # The point of this loop is to make it simple, when running both runner and gitea in docker,
+    # for the runner to wait a moment for gitea to become available before erroring out.  Within
+    # the context of a single docker-compose, something similar could be done via healthchecks, but
+    # this is more flexible.
+    while [[ $success -eq 0 ]] && [[ $try -lt ${GITEA_MAX_REG_ATTEMPTS:-10} ]]; do
+      s6-setuidgid abc \
+        gitea-runner register \
+          --instance "$(get_env GITEA_INSTANCE_URL)" \
+          --token    "${registration_token}" \
+          --name     "${runner_name:-`hostname`}" \
+          ${config} ${extra_args} --no-interactive 2>&1 | tee /tmp/reg.log
+
+      cat /tmp/reg.log | grep 'Runner registered successfully' > /dev/null
+      if [[ $? -eq 0 ]]; then
+        echo "SUCCESS"
+        success=1
+        return 0
+      else
+        echo "Waiting to retry ..."
+        sleep 5
+      fi
+      try=$(( $try + 1 ))
+    done
+  fi
+  return $try
+}
+
+main () {
+  local instance
+  local instances
+
+  if [ -z "$(get_env GITEA_INSTANCE_URL)" ]; then
+    die "No GITEA_INSTANCE_URL variables are set. Exiting"
+  fi
+
+  instances=$(get_gitea_runner_instance_count)
+
+  if [ ${instances} = 0 ]; then
+    die "No GITEA_RUNNER_REGISTRATION_TOKEN variables are set. Exiting"
+  fi
+
+  info "register ${instances} runners on $(get_env GITEA_INSTANCE_URL)"
+  for instance in $(seq 0 $((${instances} - 1)) ); do
+    local config_file
+    if [ $instance = 0 ]; then
+      pushd /config > /dev/null
+      config_file="/config/config.yaml"
+    else
+      s6-setuidgid abc mkdir -p "/config/instance_${instance}"
+      pushd "/config/instance_${instance}" > /dev/null
+      config_file="/config/instance_${instance}/config.yaml"
+    fi
+
+    local config_arg label_args
+    local extra_args run_args
+
+    config_arg="--config \"${config_file}\""
+    if [ -n "$(get_env "GITEA_RUNNER_LABELS" $instance)" ]; then
+      label_args="--labels $(get_env "GITEA_RUNNER_LABELS" $instance)"
+    fi
+    extra_args="${label_args}"
+    if [ -n "$(get_env "GITEA_RUNNER_EPHEMERAL" $instance)" ]; then
+      extra_args="${extra_args} --ephemeral"
+    fi
+    # Also pass the labels to the daemon, so that an already registered runner
+    # picks up changes to GITEA_RUNNER_LABELS instead of keeping the labels it
+    # was first registered with.
+    run_args="${label_args}"
+    if [ -n "$(get_env "GITEA_RUNNER_ONCE" $instance)" ]; then
+      run_args="${run_args} --once"
+    fi
+
+    register "$(get_env "GITEA_RUNNER_REGISTRATION_TOKEN" ${instance})" "$(get_env "GITEA_RUNNER_NAME" ${instance})" "${config_arg}" "${extra_args}"
+
+    popd > /dev/null
+  done
+}
+
+main

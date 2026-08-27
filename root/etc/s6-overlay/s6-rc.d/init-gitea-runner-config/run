@@ -1,12 +1,34 @@
 #!/command/with-contenv bash
 # shellcheck shell=bash
 
-CONFIG_FILE="/config/config.yaml"
+. /opt/lib/lib.sh
 
-[ ! -f "${CONFIG_FILE}" ] || exit 0
+main () {
+  local instance
+  local instances
 
-echo "Generate gitea-runner configuration template: ${CONFIG_FILE}"
+  instances=$(get_gitea_runner_instance_count)
 
-s6-setuidgid abc \
-  bash -c "gitea-runner generate-config > "${CONFIG_FILE}""
-cat "${CONFIG_FILE}"
+  for instance in $(seq 0 $((${instances} - 1)) ); do
+    local config_file
+    if [ $instance = 0 ]; then
+      pushd /config > /dev/null
+      config_file="/config/config.yaml"
+    else
+      s6-setuidgid abc mkdir -p "/config/instance_${instance}"
+      pushd "/config/instance_${instance}" > /dev/null
+      config_file="/config/instance_${instance}/config.yaml"
+    fi
+
+    if [ ! -f "${config_file}" ]; then
+      info "Generate gitea-runner configuration template: ${config_file}"
+      s6-setuidgid abc \
+        bash -c "gitea-runner generate-config > "${config_file}""
+      cat "${config_file}"
+    fi
+
+    popd > /dev/null
+  done
+}
+
+main

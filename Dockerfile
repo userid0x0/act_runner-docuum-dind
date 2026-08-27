@@ -33,9 +33,7 @@ FROM ${GITEA_RUNNER_DIND_IMAGE} AS downloader-gitea-runner
 # prepare /patch with gitea-runner & run.sh
 # ensure run.sh uses `/config` as LSIO does
 RUN mkdir -p /patch/usr/local/bin \
-    && cp /usr/local/bin/run.sh       /patch/usr/local/bin/run-gitea-runner.sh \
-    && cp /usr/local/bin/gitea-runner /patch/usr/local/bin/gitea-runner \
-    && sed -i 's# /data# /config#'    /patch/usr/local/bin/run-gitea-runner.sh
+    && cp /usr/local/bin/gitea-runner /patch/usr/local/bin/gitea-runner
 
 # ---
 
@@ -50,7 +48,8 @@ COPY --from=docker-in-docker-mod / /mods/universal-docker-in-docker-29
 
 ENV DOCKER_MODS=universal-docker-in-docker-29 \
     DOCKER_MODS_SIDELOAD=true \
-    MODS_DIND_PERSISTENCE=/data/var/lib/docker
+    MODS_DIND_PERSISTENCE=/data/var/lib/docker \
+    S6_STAGE2_HOOK=/dynamic-svc-gitea-runner
 
 RUN apk add --no-cache \
       btrfs-progs \

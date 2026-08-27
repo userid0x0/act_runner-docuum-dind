@@ -1,8 +1,45 @@
 #!/command/with-contenv bash
 # shellcheck shell=bash
 
+. /opt/lib/lib.sh
 export HOME=$(realpath ~abc)
-export CONFIG_FILE="/config/config.yaml"
+# THIS_INSTANCE=<will be set by S6_STAGE2_HOOK>
 
-exec s6-setuidgid abc \
-  /usr/local/bin/run-gitea-runner.sh
+main () {
+  local instance config_file
+  instance=$1
+  if [ $instance = 0 ]; then
+    pushd /config > /dev/null
+    config_file="/config/config.yaml"
+    info "Start gitea-runner instance"
+  else
+    # s6-setuidgid abc mkdir -p "/config/instance_${instance}"
+    pushd "/config/instance_${instance}" > /dev/null
+    config_file="/config/instance_${instance}/config.yaml"
+    info "Start secondary gitea-runner instance ${instance}"
+  fi
+
+  local config_arg label_args
+  local extra_args run_args
+
+  config_arg="--config ${config_file}"
+  if [ -n "$(get_env "GITEA_RUNNER_LABELS" $instance)" ]; then
+    label_args="--labels $(get_env "GITEA_RUNNER_LABELS" $instance)"
+  fi
+  extra_args="${label_args}"
+  if [ -n "$(get_env "GITEA_RUNNER_EPHEMERAL" $instance)" ]; then
+    extra_args="${extra_args} --ephemeral"
+  fi
+  # Also pass the labels to the daemon, so that an already registered runner
+  # picks up changes to GITEA_RUNNER_LABELS instead of keeping the labels it
+  # was first registered with.
+  run_args="${label_args}"
+  if [ -n "$(get_env "GITEA_RUNNER_ONCE" $instance)" ]; then
+    run_args="${run_args} --once"
+  fi
+
+  exec s6-setuidgid abc \
+    gitea-runner daemon ${config_arg} ${run_args}
+}
+
+main ${THIS_INSTANCE:-0}

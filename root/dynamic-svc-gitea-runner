@@ -1,0 +1,38 @@
+#!/command/with-contenv /bin/bash
+
+. /opt/lib/lib.sh
+
+# add dynamic secondary gitea-runner instances
+main () {
+  local instance
+  local instances
+
+  instances=$(get_gitea_runner_instance_count)
+
+  # Remove all existing custom services before continuing to ensure
+  # we aren't running anything the user may have removed
+  if [[ -n "$(/bin/ls -A /etc/s6-overlay/s6-rc.d/svc-gitea-runner_* 2>/dev/null)" ]]; then
+    echo "[dynamic-svc-gitea-runner] removing existing secondary gitea-runner services..."
+    rm -rf /etc/s6-overlay/s6-rc.d/svc-gitea-runner_*
+    rm /etc/s6-overlay/s6-rc.d/user/contents.d/svc-gitea-runner_*
+  fi
+
+  [ ! $instance = 1 ] || echo "[dynamic-svc-gitea-runner] no secondary gitea-runner services needed"
+
+  # create secondary instances of svc-gitea-runner
+  for instance in $(seq 1 $((${instances} - 1)) ); do
+    local name path
+    name="svc-gitea-runner_${instance}"
+    path="/etc/s6-overlay/s6-rc.d/${name}"
+
+    info "[dynamic-svc-gitea-runner] create secondary gitea-runner service ${name}"
+
+    cp -r /etc/s6-overlay/s6-rc.d/svc-gitea-runner "${path}"
+    sed -i "/#\s*THIS_INSTANCE/c\THIS_INSTANCE=${instance}" "${path}/run"
+    touch "/etc/s6-overlay/s6-rc.d/user/contents.d/${name}"
+  done
+}
+main
+
+# call linuxserver.io docker-mods framework
+exec /docker-mods
