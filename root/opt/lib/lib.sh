@@ -35,14 +35,15 @@ get_env() {
   local var_name="$1"
   local index="$2"
   local value
+  local postfix
+
   postfixes=()
   if [ -z "${index}" ]; then
-    postfixes+=""
+    postfixes+=("")
   else
-    postfixes+="_${index}"
-    [ "${index}" != 0 ] || postfixes+=""
+    postfixes+=("_${index}")
+    [ ! "${index}" = 0 ] || postfixes+=("")
   fi
-  
 
   for postfix in "${postfixes[@]}"; do
     local VAR
