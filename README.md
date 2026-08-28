@@ -5,7 +5,9 @@
 # Gitea gitea-runner with docuum - Docker-in-Docker (DinD) variant
 
 ## Intention
-A [gitea-runner](https://gitea.com/gitea/runner) Image based on [linuxserver.io](https://linuxserver.io)'s `baseimage-alpine`. Included components:
+A [gitea-runner](https://gitea.com/gitea/runner) Image based on [linuxserver.io](https://linuxserver.io)'s `baseimage-alpine`.
+
+Included components:
 
 * `docker` as Docker-in-Docker (DinD)<br> installed via a local `DOCKER_MOD`
 * `gitea-runner` (formerly known as `act_runner`)<br> see also https://gitea.com/gitea/runner
@@ -18,7 +20,20 @@ The image cleans up unused images using the following strategy:
 * crontab based pruning of dangling images (images with a `none` tag) - every 4h<br>command: `docker image prune --filter "dangling=true"`
 * `docuum` for LRU based Docker Image cleanup<br>see also https://github.com/stepchowfun/docuum/tree/v0.27.0
 
-## Usage
+A secondary image is generated to run a dedicated gitea-runner cache server.
+
+## Images
+* `docker.io/userid0x0/gitea-runner-docuum-dind:<tag>`<br>Tags:
+  - `v<x>.<y>.<z>-<version>` with *x*/*y*/*z* aligned with the gitea-runner release / *version* signals changes in this repo
+  - `master` build from the *master* branch in this repo aka development head
+  - `nightly` build from the *master* branch in this repo usign gitea-runner nightly builds
+* `docker.io/userid0x0/gitea-runner-cache:<tag>`<br>Tags:
+  - `v<x>.<y>.<z>-<version>` with *x*/*y*/*z* aligned with the gitea-runner release / *version* signals changes in this repo
+  - `master` build from the *master* branch in this repo aka development head
+  - `nightly` build from the *master* branch in this repo usign gitea-runner nightly builds
+* **Deprecated**: `docker.io/userid0x0/act_runner-docuum-dind`
+
+## Usage - runner
 
 ### `docker-compose.yml`
 ```yaml
@@ -49,6 +64,39 @@ volumes:
 INSTANCE_URL=https://<...>
 REGISTRATION_TOKEN=<...>
 RUNNER_NAME=<...>
+```
+
+## Usage - external cache server
+
+### `docker-compose.yml`
+```yaml
+services:
+  runner:
+    image: docker.io/userid0x0/gitea-runner-cache:v3.3.1-3
+    restart: unless-stopped
+    environment:
+      PUID: <uid to use>
+      PGID: <gid to use>
+    volumes:
+      - ./config:/config
+      - cache:/data
+    # networks:
+    #   - <tbd.network>
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.rGiteaActionsCacheHttp.rule=Host(`<tbd.url>`)"
+    #   - "traefik.http.routers.rGiteaActionsCacheHttp.entrypoints=<tbd.http entrypoint>"
+    #   - "traefik.http.routers.rGiteaActionsCache.rule=Host(`<tbd.url>`)"
+    #   - "traefik.http.routers.rGiteaActionsCache.entrypoints=<tbd.https entrypoint>"
+    #   - "traefik.http.routers.rGiteaActionsCache.tls=true"
+    #   - "traefik.http.routers.rGiteaActionsCache.tls.certresolver=<tbd.resolver>"
+
+volumes:
+  cache:
+
+# networks:
+#   <tbd.network>:
+#     external: true
 ```
 
 ## Adaptions/Modifications
