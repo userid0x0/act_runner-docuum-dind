@@ -37,7 +37,7 @@ RUN mkdir -p /patch/usr/local/bin \
 
 # ---
 
-FROM baseimage-alpine
+FROM baseimage-alpine AS runner
 
 # <universal-docker-in-docker>
 # add a DOCKER_MOD universal-docker-in-docker as a static mod
@@ -69,10 +69,26 @@ VOLUME [ "/data" ]
 
 # install
 # - docuum
-# - gitea-runner (including some scripts)
+# - gitea-runner
 COPY --from=downloader /patch /
 COPY --from=downloader-gitea-runner /patch /
 
 # add local configuration and s6-rc.d logic
-ADD /root /
+ADD /root-runner /
 
+# ---
+
+FROM baseimage-alpine AS cache
+
+# storage location of the cache
+VOLUME [ "/data" ]
+# default port for the cache server
+EXPOSE 8080
+
+# install
+# - gitea-runner
+COPY --from=downloader-gitea-runner /patch /
+
+# add local configuration and s6-rc.d logic
+ADD /root-cache /
+ADD /root-runner/opt/lib /opt/lib

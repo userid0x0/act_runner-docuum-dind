@@ -1,0 +1,28 @@
+#!/command/with-contenv bash
+# shellcheck shell=bash
+
+. /opt/lib/lib.sh
+
+main () {
+  local config_file
+  config_file="/config/config.yaml"
+
+  if [ ! -f "${config_file}" ]; then
+    info "Generate gitea-runner configuration template: ${config_file}"
+
+    # sed sequence
+    # * ensure there is an empty line before EVERY toplevel yaml key
+    # * remove toplevel keys `container:`/`runner:` (end marker empty line)
+    # * remove empty lines
+    s6-setuidgid abc gitea-runner config generate \
+      | sed 's/^\([^#\s]\S*:.*\)/\n\1/' \
+      | sed '/^container:/,/^$/d' \
+      | sed '/^runner:/,/^$/d' \
+      | sed '/^$/d' \
+      | s6-setuidgid abc bash -c "cat > "${config_file}""
+
+    cat "${config_file}"
+  fi
+}
+
+main

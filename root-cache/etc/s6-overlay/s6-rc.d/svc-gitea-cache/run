@@ -1,0 +1,23 @@
+#!/command/with-contenv bash
+# shellcheck shell=bash
+
+. /opt/lib/lib.sh
+
+export HOME=$(realpath ~abc)
+
+main () {
+  local config_file port
+  config_file="/config/config.yaml"
+
+  port=$(get_env "GITEA_CACHE_PORT")
+  port=${port:-8080}
+  
+  mkdir -p /data/cache
+  lsiown -R abc:abc /data/cache
+
+  # --port and --dir take precendence over the config file values
+  exec s6-setuidgid abc \
+    gitea-runner cache-server --config "${config_file}" --port ${port} --dir "/data/cache"
+}
+
+main

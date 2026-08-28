@@ -27,11 +27,24 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Docker meta
-        id: meta
+      - name: Docker meta for runner
+        id: meta-runner
         uses: docker/metadata-action@v6
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/act_runner-docuum-dind
+          images: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/act_runner-docuum-dind
+            ${{ secrets.DOCKERHUB_USERNAME }}/gitea-runner-docuum-dind
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{raw}}
+            type=schedule,pattern=nightly
+
+      - name: Docker meta for cache
+        id: meta-cache
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/gitea-runner-cache
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -52,13 +65,26 @@ jobs:
             echo gitea_runner_dind_image="GITEA_RUNNER_DIND_IMAGE=docker.io/gitea/runner:nightly-dind" | tee $GITHUB_OUTPUT
           fi
 
-      - name: Build and push
+      - name: Build and push runner image
         uses: docker/build-push-action@v7
         with:
           context: .
+          target: runner
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-runner.outputs.tags }}
+          labels: ${{ steps.meta-runner.outputs.labels }}
+          build-args: |
+            ${{ steps.buildargs.outputs.gitea_runner_dind_image }}
+
+      - name: Build and push cache image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: cache
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-cache.outputs.tags }}
+          labels: ${{ steps.meta-cache.outputs.labels }}
           build-args: |
             ${{ steps.buildargs.outputs.gitea_runner_dind_image }}
