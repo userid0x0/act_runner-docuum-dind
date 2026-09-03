@@ -39,7 +39,7 @@ A secondary image is generated to run a dedicated gitea-runner cache server.
 ```yaml
 services:
   runner:
-    image: docker.io/userid0x0/gitea-runner-docuum-dind:v3.3.1-3
+    image: docker.io/userid0x0/gitea-runner-docuum-dind:v3.3.2-1
     restart: unless-stopped
     privileged: true
     environment:
@@ -72,7 +72,7 @@ RUNNER_NAME=<...>
 ```yaml
 services:
   runner:
-    image: docker.io/userid0x0/gitea-runner-cache:v3.3.1-3
+    image: docker.io/userid0x0/gitea-runner-cache:v3.3.2-1
     restart: unless-stopped
     environment:
       PUID: <uid to use>
