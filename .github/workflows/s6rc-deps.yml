@@ -24,34 +24,56 @@ jobs:
             https://gist.github.com/userid0x0/8bab9ffd4ef0c5e8dd8213dce19f4256/raw/a5113f143c11613e56ce8a1ebe3e14d8e873f48e/s6rc_deps.sh
           chmod +x s6rc_deps.sh
 
-      - name: Build
+      - name: Build runner image
         uses: docker/build-push-action@v7
         with:
           context: .
           target: runner
           platforms: linux/amd64
           push: false
-          tags: localhost/tmp_image
+          tags: localhost/tmp_runner
+
+      - name: Build cache image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: cache
+          platforms: linux/amd64
+          push: false
+          tags: localhost/tmp_cache
       
-      - name: Generate S6 graph as dot file
+      - name: Generate runner S6 graph as dot file
         run: |
           (docker stop temp_instance && sleep 20) || true
-          docker run --detach --rm --name temp_instance localhost/tmp_image
+          docker run --detach --rm --name temp_instance localhost/tmp_runner
           sleep 30
           docker logs temp_instance
           docker cp ./s6rc_deps.sh temp_instance:/s6rc_deps.sh
-          docker exec --tty temp_instance /s6rc_deps.sh /etc/s6-overlay/s6-rc.d > ./s6rc.dot
+          docker exec --tty temp_instance /s6rc_deps.sh /etc/s6-overlay/s6-rc.d > ./s6rc_runner.dot
           docker stop temp_instance
           sleep 10
-          docker image rm localhost/tmp_image || true
+          docker image rm localhost/tmp_runner || true
+
+      - name: Generate cache S6 graph as dot file
+        run: |
+          (docker stop temp_instance && sleep 20) || true
+          docker run --detach --rm --name temp_instance localhost/tmp_cache
+          sleep 30
+          docker logs temp_instance
+          docker cp ./s6rc_deps.sh temp_instance:/s6rc_deps.sh
+          docker exec --tty temp_instance /s6rc_deps.sh /etc/s6-overlay/s6-rc.d > ./s6rc_cache.dot
+          docker stop temp_instance
+          sleep 10
+          docker image rm localhost/tmp_cache || true
 
       - name: Render dot graph
         run: |
           sudo dot -c
-          dot -Tsvg -o s6rc.svg s6rc.dot
+          dot -Tsvg -o s6rc_runner.svg s6rc_runner.dot
+          dot -Tsvg -o s6rc_cache.svg s6rc_cache.dot
 
       - name: Archive s6rc.svg
         uses: actions/upload-artifact@v7
         with:
           name: master-s6rc
-          path: s6rc.svg
+          path: s6rc_*.svg
