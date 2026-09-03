@@ -112,6 +112,10 @@ Based on https://docs.linuxserver.io/general/container-customization/#custom-scr
 * configuration changes e.g. `/etc/docker/daemon.json`
 
 ## Internals
-### s6rc.d dependency graph
-![s6rc.d dependency](/misc/s6rc.svg)
+### s6rc.d dependency graph - runner
+![s6rc.d dependency](/misc/s6rc_runner.svg)
+
+### s6rc.d dependency graph - external cache server
+![s6rc.d dependency](/misc/s6rc_cache.svg)
+
 
