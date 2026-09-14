@@ -5,43 +5,47 @@ set -e
 . /opt/lib/lib.sh
 
 register () {
-  local try success
+  local try max_attempts
   local registration_token="$1"
   local runner_name="$2"
   local config_arg="$3"
   local extra_args="$4"
+
   RUNNER_STATE_FILE=${RUNNER_STATE_FILE:-'.runner'}
-  if [[ ! -s "$RUNNER_STATE_FILE" ]]; then
-    try=0
-    success=0
-
-    # The point of this loop is to make it simple, when running both runner and gitea in docker,
-    # for the runner to wait a moment for gitea to become available before erroring out.  Within
-    # the context of a single docker-compose, something similar could be done via healthchecks, but
-    # this is more flexible.
-    while [[ $success -eq 0 ]] && [[ $try -lt ${GITEA_MAX_REG_ATTEMPTS:-10} ]]; do
-      set +e
-      s6-setuidgid abc \
-        timeout 15 \
-          gitea-runner register \
-            --instance "$(get_env GITEA_INSTANCE_URL)" \
-            --token    "${registration_token}" \
-            --name     "${runner_name:-`hostname`}" \
-            ${config} ${extra_args} --no-interactive 2>&1 | tee /tmp/reg.log
-      set -e
-
-      if cat /tmp/reg.log | grep 'Runner registered successfully' > /dev/null; then
-        echo "SUCCESS"
-        success=1
-        return 0
-      else
-        echo "Waiting to retry ..."
-        sleep 5
-      fi
-      try=$(( $try + 1 ))
-    done
+  if [[ -s "$RUNNER_STATE_FILE" ]]; then
+    return 0
   fi
-  return $try
+
+  try=0
+  success=0
+  max_attempts=${GITEA_MAX_REG_ATTEMPTS:-10}
+
+  # The point of this loop is to make it simple, when running both runner and gitea in docker,
+  # for the runner to wait a moment for gitea to become available before erroring out.  Within
+  # the context of a single docker-compose, something similar could be done via healthchecks, but
+  # this is more flexible.
+  while [[ $success -eq 0 ]] && [[ $try -lt $max_attempts ]]; do
+    try=$(( $try + 1 ))
+    set +e
+    s6-setuidgid abc \
+      timeout 15 \
+        gitea-runner register \
+          --instance "$(get_env GITEA_INSTANCE_URL)" \
+          --token    "${registration_token}" \
+          --name     "${runner_name:-`hostname`}" \
+          ${config} ${extra_args} --no-interactive 2>&1 | tee /tmp/reg.log
+    set -e
+
+    if grep -q 'Runner registered successfully' /tmp/reg.log; then
+      return 0
+    else
+      info "Waiting to retry (attempt ${try}/${max_attempts}) ..."
+      sleep 5
+    fi
+  done
+
+  info "Registration failed after ${max_attempts} attempts, giving up"
+  return 1
 }
 
 main () {
@@ -58,7 +62,7 @@ main () {
     die "No GITEA_RUNNER_REGISTRATION_TOKEN variables are set. Exiting"
   fi
 
-  info "register ${instances} runners on $(get_env GITEA_INSTANCE_URL)"
+  info "Register ${instances} runners on $(get_env GITEA_INSTANCE_URL)"
   for instance in $(seq 0 $((${instances} - 1)) ); do
     local config_file
     if [ $instance = 0 ]; then
@@ -89,7 +93,9 @@ main () {
       run_args="${run_args} --once"
     fi
 
-    register "$(get_env "GITEA_RUNNER_REGISTRATION_TOKEN" ${instance})" "$(get_env "GITEA_RUNNER_NAME" ${instance})" "${config_arg}" "${extra_args}"
+    register "$(get_env "GITEA_RUNNER_REGISTRATION_TOKEN" ${instance})" "$(get_env "GITEA_RUNNER_NAME" ${instance})" "${config_arg}" "${extra_args}" \
+      || die "Registration for runner ${instance} failed. Exiting"
+    info "Registration for runner ${instance} succeeded"
 
     popd > /dev/null
   done
