@@ -9,7 +9,7 @@ FROM ghcr.io/linuxserver/mods:universal-docker-in-docker-29.7.2-5.5.1 AS docker-
 
 FROM baseimage-alpine AS downloader-amd64
 
-ARG DOCUUM_VERSION=0.27.0
+ARG DOCUUM_VERSION=0.27.1
 
 ADD --chown=root:root \
     --chmod=755 \
@@ -18,7 +18,7 @@ ADD --chown=root:root \
 
 FROM baseimage-alpine AS downloader-arm64
 
-ARG DOCUUM_VERSION=0.27.0
+ARG DOCUUM_VERSION=0.27.1
 
 ADD --chown=root:root \
     --chmod=755 \
