@@ -2,6 +2,9 @@ ARG GITEA_RUNNER_DIND_IMAGE=gitea-runner-dind
 
 # use these hardcoded versions allow a proper detection by dependabot
 FROM ghcr.io/linuxserver/baseimage-alpine:3.24 AS baseimage-alpine
+ARG DOCUUM_VERSION=0.27.1 \
+    GITLFS_VERSION=3.8.1
+
 FROM docker.io/gitea/runner:5.2.2-dind AS gitea-runner-dind
 FROM ghcr.io/linuxserver/mods:universal-docker-in-docker-29.9.2-5.6.1 AS docker-in-docker-mod
 
@@ -9,21 +12,27 @@ FROM ghcr.io/linuxserver/mods:universal-docker-in-docker-29.9.2-5.6.1 AS docker-
 
 FROM baseimage-alpine AS downloader-amd64
 
-ARG DOCUUM_VERSION=0.27.1
-
 ADD --chown=root:root \
     --chmod=755 \
     https://github.com/stepchowfun/docuum/releases/download/v${DOCUUM_VERSION}/docuum-x86_64-unknown-linux-musl \
     /patch/usr/local/bin/docuum
 
-FROM baseimage-alpine AS downloader-arm64
+RUN mkdir -p /downloads/git-lfs \
+    && { curl -L --fail "https://github.com/git-lfs/git-lfs/releases/download/v${GITLFS_VERSION}/git-lfs-linux-amd64-v${GITLFS_VERSION}.tar.gz" \
+         | tar -C /downloads/git-lfs --strip-components 1 -xz; } \
+    && install -D /downloads/git-lfs/git-lfs /patch/usr/bin/git-lfs
 
-ARG DOCUUM_VERSION=0.27.1
+FROM baseimage-alpine AS downloader-arm64
 
 ADD --chown=root:root \
     --chmod=755 \
     https://github.com/stepchowfun/docuum/releases/download/v${DOCUUM_VERSION}/docuum-aarch64-unknown-linux-musl \
     /patch/usr/local/bin/docuum
+
+RUN mkdir -p /downloads/git-lfs \
+    && { curl -s -L --fail "https://github.com/git-lfs/git-lfs/releases/download/v${GITLFS_VERSION}/git-lfs-linux-arm64-v${GITLFS_VERSION}.tar.gz" \
+         | tar -C /downloads/git-lfs --strip-components 1 -xz; } \
+    && install -D /downloads/git-lfs/git-lfs /patch/usr/bin/git-lfs
 
 FROM downloader-${TARGETARCH} AS downloader
 
@@ -56,6 +65,8 @@ RUN apk add --no-cache \
       curl \
       e2fsprogs \
       e2fsprogs-extra \
+      git \
+      git-lfs \
       ip6tables \
       iptables \
       openssl \
@@ -69,6 +80,7 @@ VOLUME [ "/data" ]
 
 # install
 # - docuum
+# - git-lfs (patch)
 # - gitea-runner
 COPY --from=downloader /patch /
 COPY --from=downloader-gitea-runner /patch /
