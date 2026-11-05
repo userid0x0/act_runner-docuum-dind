@@ -9,6 +9,11 @@ main () {
 
   instances=$(get_gitea_runner_instance_count)
 
+  # always create config_latest.template.yml
+  # allows to sync a custom config.yaml with the latest template using your preferred diff viewer
+  s6-setuidgid abc \
+    bash -c "gitea-runner generate-config > "/config/config_latest.template.yaml""
+
   for instance in $(seq 0 $((${instances} - 1)) ); do
     local config_file
     if [ $instance = 0 ]; then
