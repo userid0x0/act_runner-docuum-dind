@@ -5,8 +5,8 @@ FROM ghcr.io/linuxserver/baseimage-alpine:3.24 AS baseimage-alpine
 ARG DOCUUM_VERSION=0.27.1 \
     GITLFS_VERSION=3.8.1
 
-FROM docker.io/gitea/runner:5.3.0-dind AS gitea-runner-dind
-FROM ghcr.io/linuxserver/mods:universal-docker-in-docker-29.9.2-5.6.1 AS docker-in-docker-mod
+FROM docker.io/gitea/runner:5.4.0-dind AS gitea-runner-dind
+FROM ghcr.io/linuxserver/mods:universal-docker-in-docker-29.9.3-5.7.0 AS docker-in-docker-mod
 
 # ---
 
