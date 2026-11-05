@@ -7,30 +7,59 @@ main () {
   local instance
   local instances
 
-  instances=$(get_gitea_runner_instance_count)
-
   # always create config_latest.template.yml
   # allows to sync a custom config.yaml with the latest template using your preferred diff viewer
   s6-setuidgid abc \
-    bash -c "gitea-runner generate-config > "/config/config_latest.template.yaml""
+    bash -c "gitea-runner generate-config > '/config/config_latest.template.yaml'"
+
+  instances=$(get_gitea_runner_instance_count)
 
   for instance in $(seq 0 $((${instances} - 1)) ); do
     local config_file
-    if [ $instance = 0 ]; then
+    if [ $instance -eq 0 ]; then
       pushd /config > /dev/null
+      runner_file="/config/.runner"
       config_file="/config/config.yaml"
     else
-      s6-setuidgid abc mkdir -p "/config/instance_${instance}"
+      s6-setuidgid abc \
+        mkdir -p "/config/instance_${instance}"
       pushd "/config/instance_${instance}" > /dev/null
+      runner_file="/config/instance_${instance}/.runner"
       config_file="/config/instance_${instance}/config.yaml"
     fi
+    s6-setuidgid abc mkdir -p "/act/instance_${instance}"
+    workdir_parent="/act/instance_${instance}"
 
     if [ ! -f "${config_file}" ]; then
       info "Generate gitea-runner configuration template: ${config_file}"
+      # set a fixed path for
+      # `runner.file`         -> holds private runner credentials
+      # `host.workdir_parent` -> if multiple gitea-runner instances are running this shoud be
+      #                          a unique path see - https://gitea.com/gitea/runner/issues/1391
       s6-setuidgid abc \
-        bash -c "gitea-runner generate-config > "${config_file}""
-      cat "${config_file}"
+        bash -c "gitea-runner generate-config \
+                 | sed 's|#\s*file:|file:|' \
+                 | sed 's|#\s*workdir_parent:|workdir_parent:|' \
+                 > '${config_file}'"
+      info " - set runner.file = ${runner_file}"
+      s6-setuidgid abc \
+        gitea-runner -c "${config_file}" config set runner.file "${runner_file}"
+      info " - set host.workdir_parent = ${workdir_parent}"
+      s6-setuidgid abc \
+        gitea-runner -c "${config_file}" config set host.workdir_parent "${workdir_parent}"
+      info "<${config_file}>"
+      cat "${config_file}" | sed 's/^/    /'
+      info "</${config_file}>"
     fi
+
+    # <sanity_checks>
+    if ! s6-setuidgid abc gitea-runner -c "${config_file}" config get runner.file >/dev/null 2>&1; then
+      info "Rework recommended - please set runner.file to a custom path in '${config_file}' e.g. '${runner_file}'"
+    fi
+    if ! s6-setuidgid abc gitea-runner -c "${config_file}" config get host.workdir_parent >/dev/null 2>&1; then
+      info "Rework recommended - please set host.workdir_parent to a custom path in '${config_file}' e.g. '${workdir_parent}'"
+    fi
+    # </sanity_checks>
 
     popd > /dev/null
   done
