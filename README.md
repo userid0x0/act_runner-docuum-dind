@@ -50,10 +50,10 @@ services:
       - .env
     volumes:
       - ./config:/config
-      - docker:/data
+      - data:/data
 
 volumes:
-  docker:
+  data:
 ```
 
 ### `.env`
@@ -104,22 +104,56 @@ Known Limitations:
 * Registration phase must register one new runner at a time (to be investigated) - seems to be related to the registration token validity
 
 Implementation:
-* the variables `GITEA_RUNNER_REGISTRATION_TOKEN`/`GITEA_RUNNER_NAME` can have a postfix `_<0..x>` (starting from 0)
+* the variables `GITEA_RUNNER_REGISTRATION_TOKEN`/`GITEA_RUNNER_NAME` can have a postfix `_<0..x>` (starting from `x=0`)
 * postfix `_0` can be omited
-* variable `GITEA_RUNNER_REGISTRATION_TOKEN_<x>` is used to signals the number of instances
+* variable `GITEA_RUNNER_REGISTRATION_TOKEN_<x>` is used to signal the number of instances
 * the postfixes must be ascending starting from `0`
 * The configuration file of the first instance resides as `/config/config.yaml` while for the secondary instances the files are placed into `/config/instance_<x>/config.yaml`
 * In case no configuration file exists a template is generated using `gitea generate-config` with the following adaptions
   - the `runner.file` setting points to `/config/.runner` / `/config/instance_<x>/.runner`
-  - the `host.workdir_parent` setting points to `/act/instance_<x>`
+  - the `host.workdir_parent` setting points to `/data/act/instance_<x>`
 
-### `.env`
+#### `.env`
 ```
 GITEA_INSTANCE_URL: https://<...>
 GITEA_RUNNER_REGISTRATION_TOKEN_0: <first token>
 GITEA_RUNNER_NAME_0: <name of first instance>
 GITEA_RUNNER_REGISTRATION_TOKEN_1: <second token>
 GITEA_RUNNER_NAME_1: <name of second instance>
+```
+
+### configuration file re-usage
+!ADVANCED!
+
+In case multiple runners share the same `config.yaml` base configuration it's possible to use env variables can be used to make the config.yaml dynamic.
+
+#### `docker-compose.yml`
+```yaml
+services:
+  runner:
+    image: docker.io/userid0x0/gitea-runner-docuum-dind:...
+    ....
+    environment:
+      GITEA_RUNNER_REGISTRATION_TOKEN_0: <>
+      GITEA_RUNNER_REGISTRATION_TOKEN_1: <>
+    ....
+    volumes:
+      - ./config:/config
+      - data:/data
+      # bind mount the same config.yaml for all instances
+      - ./config.yaml:/config/config.yaml:ro
+      - ./config.yaml:/config/instance_1/config.yaml:ro
+```
+
+#### `config.yaml`
+```yaml
+....
+runner:
+  file: ${SVC_GITEA_RUNNER_CONFIG_PATH}/.runner
+....
+host:
+  workdir_parent: /data/act/instance_${SVC_GITEA_RUNNER_INSTANCE}
+....
 ```
 
 
