@@ -39,7 +39,7 @@ main () {
   fi
 
   # make SVC_GITEA_RUNNER_INSTANCE & SVC_GITEA_RUNNER_CONFIG_PATH available to the config.yaml file
-  export SVC_GITEA_RUNNER_INSTANCE=${THIS_INSTANCE} \
+  export SVC_GITEA_RUNNER_INSTANCE=${instance} \
          SVC_GITEA_RUNNER_CONFIG_PATH="$(dirname "${config_file}")"
   exec s6-setuidgid abc \
     gitea-runner daemon ${config_arg} ${run_args}
