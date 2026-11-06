@@ -18,7 +18,7 @@ Persistent files are stored in `/config` & `/data` reducing the number of bind-m
 The image cleans up unused images using the following strategy:
 
 * crontab based pruning of dangling images (images with a `none` tag) - every 4h<br>command: `docker image prune --filter "dangling=true"`
-* `docuum` for LRU based Docker Image cleanup<br>see also https://github.com/stepchowfun/docuum/tree/v0.27.1
+* `docuum` for LRU based Docker Image cleanup<br>see also https://github.com/stepchowfun/docuum/tree/v0.27.3
 
 A secondary image is generated to run a dedicated gitea-runner cache server.
 
