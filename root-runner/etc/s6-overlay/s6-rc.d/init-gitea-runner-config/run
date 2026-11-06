@@ -27,7 +27,8 @@ main () {
       runner_file="/config/instance_${instance}/.runner"
       config_file="/config/instance_${instance}/config.yaml"
     fi
-    s6-setuidgid abc mkdir -p "/act/instance_${instance}"
+    mkdir -p "/act/instance_${instance}"
+    lsiown -R abc:abc "/act/instance_${instance}"
     workdir_parent="/act/instance_${instance}"
 
     if [ ! -f "${config_file}" ]; then
