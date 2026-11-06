@@ -18,7 +18,7 @@ Persistent files are stored in `/config` & `/data` reducing the number of bind-m
 The image cleans up unused images using the following strategy:
 
 * crontab based pruning of dangling images (images with a `none` tag) - every 4h<br>command: `docker image prune --filter "dangling=true"`
-* `docuum` for LRU based Docker Image cleanup<br>see also https://github.com/stepchowfun/docuum/tree/v0.27.0
+* `docuum` for LRU based Docker Image cleanup<br>see also https://github.com/stepchowfun/docuum/tree/v0.27.1
 
 A secondary image is generated to run a dedicated gitea-runner cache server.
 
@@ -45,9 +45,6 @@ services:
     environment:
       PUID: <uid to use>
       PGID: <gid to use>
-      GITEA_INSTANCE_URL: "${INSTANCE_URL}"
-      GITEA_RUNNER_REGISTRATION_TOKEN: "${REGISTRATION_TOKEN}"
-      GITEA_RUNNER_NAME: "${RUNNER_NAME}"
       # DOCUUM_ARGS: "--threshold 80GB"
     env_file:
       - .env
@@ -61,9 +58,9 @@ volumes:
 
 ### `.env`
 ```
-INSTANCE_URL=https://<...>
-REGISTRATION_TOKEN=<...>
-RUNNER_NAME=<...>
+GITEA_INSTANCE_URL: https://<...>
+GITEA_RUNNER_REGISTRATION_TOKEN: <token>
+GITEA_RUNNER_NAME: <name>
 ```
 
 ## Usage - external cache server
@@ -98,6 +95,33 @@ volumes:
 #   <tbd.network>:
 #     external: true
 ```
+
+## Multi-Instance mode
+It's possible to run multiple instances of `gitea-runner` within that container. Please do not mix it up with the `runner.capacity` feature of `gitea-runner`. The usecase is that the runners will be connected to different organizations/repositories but share the docker image storage to reduce disk usage.
+
+Known Limitations:
+* `runner.tool_cache_mode: shared` is only supported for one runner<br>According to the gitea-team [1](https://gitea.com/gitea/runner/issues/1391) it's possible to do the tool cache manually using volume mounts
+* Registration phase must register one new runner at a time (to be investigated) - seems to be related to the registration token validity
+
+Implementation:
+* the variables `GITEA_RUNNER_REGISTRATION_TOKEN`/`GITEA_RUNNER_NAME` can have a postfix `_<0..x>` (starting from 0)
+* postfix `_0` can be omited
+* variable `GITEA_RUNNER_REGISTRATION_TOKEN_<x>` is used to signals the number of instances
+* the postfixes must be ascending starting from `0`
+* The configuration file of the first instance resides as `/config/config.yaml` while for the secondary instances the files are placed into `/config/instance_<x>/config.yaml`
+* In case no configuration file exists a template is generated using `gitea generate-config` with the following adaptions
+  - the `runner.file` setting points to `/config/.runner` / `/config/instance_<x>/.runner`
+  - the `host.workdir_parent` setting points to `/act/instance_<x>`
+
+### `.env`
+```
+GITEA_INSTANCE_URL: https://<...>
+GITEA_RUNNER_REGISTRATION_TOKEN_0: <first token>
+GITEA_RUNNER_NAME_0: <name of first instance>
+GITEA_RUNNER_REGISTRATION_TOKEN_1: <second token>
+GITEA_RUNNER_NAME_1: <name of second instance>
+```
+
 
 ## Adaptions/Modifications
 ### Environment Variables
