@@ -6,7 +6,7 @@ ARG DOCUUM_VERSION=0.27.3 \
     GITLFS_VERSION=3.8.1
 
 FROM docker.io/gitea/runner:6.0.0-dind AS gitea-runner-dind
-FROM ghcr.io/linuxserver/mods:universal-docker-in-docker-29.9.3-5.7.0 AS docker-in-docker-mod
+FROM ghcr.io/linuxserver/mods:universal-docker-in-docker-29.9.3-5.7.1 AS docker-in-docker-mod
 
 # ---
 
